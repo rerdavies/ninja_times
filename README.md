@@ -1,5 +1,5 @@
 # ninja_times
-A small utility for analyzing CMake/ninja build times in .ninja_log files.
+A small utility for analyzing CMake/ninja build times in .ninja_log files on a per-file basis. An indispensible tool if you are interested in profiling and optimizing build times.
 
 Example:
 ```
@@ -53,15 +53,17 @@ Examples:
      ninja_times build/.ninja_log --match PiPedalModel.cpp.o --history
 ```
 ---
-### Build instructions
+## Build instructions
 
-#### Dependencies
+### Dependencies
 
-Require cmake. No other dependencies.
+Requires cmake and ninja-build to build the project. No other dependencies.
+```
+  apt install cmake ninja-build
+```
+### Building
 
-#### Building
-
-Load the folder in Visual Studio Code, and use use VSCodes's integrated CMake support. 
+Load the folder in Visual Studio Code, and use VSCodes's integrated CMake project support. 
 
 Or.
 
