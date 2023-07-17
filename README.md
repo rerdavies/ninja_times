@@ -1,7 +1,7 @@
 # ninja_times
 A small utility for analyzing CMake/ninja build times in .ninja_log files on a per-file basis. An indispensible tool if you are interested in profiling and optimizing build times.
 
-Example:
+Examples:
 ```
  $ ninja_times build/.ninja_log | head 
  283.862 react/build/index.html
