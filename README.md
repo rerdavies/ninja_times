@@ -24,19 +24,20 @@ src/test/CMakeFiles/CairoTest.dir/EditBoxTestPage.cpp.o
 ---
 
 ```
-ninja_time: Anaylyzes .ninja_log files for per-file build times.
+ninja_times: Anaylyzes .ninja_log files for per-file build times.
 Copyright (c) 2023 Robin Davies.
 
-Syntax: ninja_times filename [regexp] [options]
-   filename: a .ninja_log file.
+Syntax: ninja_times filename [options]
+   filename: path of a .ninja_log file.
 Options:
    -h, --help Display this message.:
-   --history  Display history of file build times.:
-   --match    A glob pattern that selects which files will be displayed.
+   --history  Display history of file build times.
+   --match [pattern]
+              A glob pattern that selects which files will be displayed.
               ? matches a character. * matches zero or more characters. 
               [abc] matches 'a', 'b' or 'c' [!abc] matches anything but.
 
-ninja_time analyzes file build times in .ninja_log files.
+ninja_times analyzes file build times in .ninja_log files.
 
 By default, ninja_time displays the most recent build times for 
 all files in the project. If a --match argument is provied, only 
@@ -50,8 +51,7 @@ Examples:
      ninja_times build/.ninja_log   # display build times for all files.
 
      # display recent build times for the file PiPedalModel.ccp.o
-     ninja_times build/.ninja_log --match PiPedalModel.cpp.o --history
-```
+     ninja_times build/.ninja_log --match PiPedalModel.cpp.o --history```
 ---
 ## Build instructions
 

@@ -51,6 +51,7 @@ int main(int argc, const char**argv)
 
     try {
         CommandLineParser parser;
+        parser.AddOption("-h",&help);
         parser.AddOption("--help",&help);
         parser.AddOption("--history",&history);
         parser.AddOption("--pattern",&pattern);
@@ -58,19 +59,16 @@ int main(int argc, const char**argv)
 
         parser.Parse(argc,argv);
 
-        if (parser.ArgumentCount() == 1)
+        if (parser.ArgumentCount() == 0)
+        {
+            help = true;
+        } else if (parser.ArgumentCount() == 1)
         {
             filename = parser.Argument(0);
-        } else if (parser.ArgumentCount() == 2)
-        {
-            filename = parser.Argument(0);
-            pattern = parser.Argument(1);
-        }
-        if (parser.ArgumentCount() < 1 || parser.ArgumentCount() > 2)
-        {
+        } else {
             throw std::logic_error("Incorrect number of arguments.");
         }
-    } catch (const std::exception e)
+    } catch (const std::exception& e)
     {
         cout << "Error: " << e.what() << endl;
         cout << endl;
@@ -81,16 +79,17 @@ int main(int argc, const char**argv)
     {   cout << "ninja_times: Anaylyzes .ninja_log files for per-file build times." << endl;
         cout << "Copyright (c) 2023 Robin Davies." << endl;
         cout << endl;
-        cout << "Syntax: ninja_times filename [regexp] [options]" << endl;
-        cout << "   filename: a .ninja_log file." << endl;
+        cout << "Syntax: ninja_times filename [options]" << endl;
+        cout << "   filename: path of a .ninja_log file." << endl;
         cout << "Options:" << endl;
         cout << "   -h, --help Display this message.:" << endl;
-        cout << "   --history  Display history of file build times.:" << endl;
-        cout << "   --match    A glob pattern that selects which files will be displayed." << endl;
+        cout << "   --history  Display history of file build times." << endl;
+        cout << "   --match [pattern]" << endl;
+        cout << "              A glob pattern that selects which files will be displayed." << endl;
         cout << "              ? matches a character. * matches zero or more characters. " << endl;
         cout << "              [abc] matches 'a', 'b' or 'c' [!abc] matches anything but." << endl;
         cout << endl;
-        cout << "ninja_time analyzes file build times in .ninja_log files." << endl;
+        cout << "ninja_times analyzes file build times in .ninja_log files." << endl;
         cout << endl;
         cout << "By default, ninja_time displays the most recent build times for " << endl;
         cout << "all files in the project. If a --match argument is provied, only " << endl;
