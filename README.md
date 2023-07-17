@@ -52,5 +52,32 @@ Examples:
      # display recent build times for the file PiPedalModel.ccp.o
      ninja_times build/.ninja_log --match PiPedalModel.cpp.o --history
 ```
+---
+### Build instructions
+
+#### Dependencies
+
+Require cmake. No other dependencies.
+
+#### Building
+
+Load the folder in Visual Studio Code, and use use VSCodes's integrated CMake support. 
+
+Or.
+
+Run the following command to configure build scripts:
+```
+     ./config.sh
+```
+
+Run the following command to build the project:
+```
+    ./make.sh
+```
+
+The build binary can be found at
+```
+build/src/ninja_times
+```
 
 
