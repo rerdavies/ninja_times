@@ -77,7 +77,7 @@ Run the following command to build the project:
     ./make.sh
 ```
 
-The build binary can be found at
+The built binary can be found at
 ```
 build/src/ninja_times
 ```
