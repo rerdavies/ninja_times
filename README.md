@@ -51,8 +51,15 @@ Examples:
      ninja_times build/.ninja_log   # display build times for all files.
 
      # display recent build times for the file PiPedalModel.ccp.o
-     ninja_times build/.ninja_log --match PiPedalModel.cpp.o --history```
+     ninja_times build/.ninja_log --match PiPedalModel.cpp.o --history
+```
 ---
+&nbsp;
+
+&nbsp;
+
+
+    
 ## Build instructions
 
 ### Dependencies
