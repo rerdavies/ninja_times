@@ -46,13 +46,16 @@ public:
 
     bool operator<(const NinjaFile&other) { return duration_ms() > other.duration_ms(); }
 
-
+    const std::string&extra() const { return extra_; }
 private:
 
     uint64_t start_time_,end_time_;
     ninja_clock_t::time_point time_;
     std::string filename_;
+    std::string extra_;
 };
+
+std::ostream&operator<<(std::ostream&s, const NinjaFile&ninjaFile);
 
 class NinjaLog {
 public:
@@ -99,7 +102,6 @@ private:
 class NinjaHistory {
 public:
     void load(const std::string&filename,const std::string&pattern);
-
     const std::vector<NinjaFileHistory> &file_histories() const ;
 private:
     std::vector<NinjaFileHistory> file_histories_;

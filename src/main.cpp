@@ -54,7 +54,7 @@ int main(int argc, const char**argv)
         parser.AddOption("-h",&help);
         parser.AddOption("--help",&help);
         parser.AddOption("--history",&history);
-        parser.AddOption("--pattern",&pattern);
+        parser.AddOption("--match",&pattern);
 
 
         parser.Parse(argc,argv);

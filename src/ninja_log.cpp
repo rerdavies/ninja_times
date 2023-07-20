@@ -28,43 +28,141 @@
 #include <algorithm>
 #include <iomanip>
 #include "GlobMatcher.hpp"
+#include <filesystem>
+#include <unordered_set>
 
 using namespace std;
+
+struct FileKey {
+    std::string name;
+    int64_t time;
+    bool operator==(const FileKey&other) const { 
+        return time == other.time && name == other.name;
+    }
+};
+
+template<>
+struct std::hash<FileKey>
+{
+    std::size_t operator()(FileKey const& v) const noexcept
+    {
+        std::size_t h1 = std::hash<std::string>{}(v.name);
+        std::size_t h2 = std::hash<int64_t>{}(v.time);
+        return h1 * (h2 *0x010013UL); 
+    }
+};
 
 void NinjaHistory::load(const std::string&filename, const std::string&pattern)
 {
     GlobMatcher matcher { pattern};
-    fstream f(filename);
-    if (!f.is_open())
-    {
-        throw std::invalid_argument(SS("Can't open file" << filename));
-    }
+
     std::string line;
-    std::getline(f, line);
+
+    std::string history = filename + ".history";
+    std::vector<NinjaFile> allFiles;
+
+    std::unordered_set<FileKey> existingRecords{1000};
+
+    if (std::filesystem::exists(history))
+    {
+        ifstream f(history);
+        if (!f.is_open())
+        {
+            throw std::invalid_argument(SS("Can't open file" << history));
+        }
+        while (std::getline(f,line))
+        {
+            if (line.length() != 0 && !line.starts_with('#'))
+            {
+                NinjaFile file{line};
+                allFiles.push_back(file);
+                FileKey key {
+                    file.file_name(),
+                    file.time().time_since_epoch().count()
+                };
+                existingRecords.insert(key);
+            }
+        }
+    }
+
+    bool recordAdded = false;
+    {
+        ifstream f;
+        f.open(filename);
+        if (!f.is_open()) 
+        {
+            throw std::invalid_argument(SS("Can't open file " << filename));
+        }
+        if (!std::getline(f,line))
+        {
+            throw std::invalid_argument("Empty log file.");
+        }
+        {
+            if (line != "# ninja log v5")
+            {
+                if (line.starts_with("# ninja log"))
+                {
+                    throw std::invalid_argument("Invalid ninja log version. Expecting: '# ninja log v5'");
+                } else {
+                    throw std::invalid_argument("Not a valid ninja file file.. Expecting: '# ninja log v5'");
+                }
+            }
+        }
+        while (std::getline(f,line))
+        {
+            if (line.length() != 0 && !line.starts_with('#'))
+            {
+                NinjaFile file{line};
+                FileKey key {
+                    file.file_name(),
+                    file.time().time_since_epoch().count()
+                };
+                if (!existingRecords.contains(key))
+                {
+                    existingRecords.insert(key);
+                    allFiles.push_back(file);
+                    recordAdded = true;
+                }
+            }
+        }
+    }
+    if (recordAdded)
+    {
+        std::string tmpFile = history + ".$$$";
+
+        ofstream f(tmpFile);
+        if (!f.is_open())
+        {
+            throw std::invalid_argument(SS("Can't open file" << tmpFile));
+        }
+        f << "# ninja log v5" << endl;
+        for (auto& file : allFiles)
+        {
+            f << file << endl;
+        }
+        f.close();
+
+        if (std::filesystem::exists(history))
+        {
+            std::filesystem::remove(history);
+        }
+        std::filesystem::rename(tmpFile,history);
+
+    }
+
+ 
 
     std::unordered_map<std::string, NinjaFileHistory> fileMap;
-    while (!f.eof())
+    for (auto&file: allFiles)
     {
-        std::getline(f, line);
-        if (line.starts_with("#"))
+        const std::string&name = file.file_name();
+        if (matcher.Matches(name))
         {
-            continue;
-        }
-
-        if (line.length() != 0)
-        {
-            NinjaFile file{line};
-
-            std::string name = file.file_name();
-
-            if (matcher.Matches(name))
+            if (!fileMap.contains(name))
             {
-                if (!fileMap.contains(name))
-                {
-                    fileMap[name] = NinjaFileHistory(file.file_name());
-                }
-                fileMap[name].add_file(file);
+                fileMap[name] = NinjaFileHistory(file.file_name());
             }
+            fileMap[name].add_file(file);
         }
     }
 
@@ -94,9 +192,8 @@ void NinjaLog::load(const std::string& filename, const std::string&pattern)
     }
     std::string line;
     std::unordered_map<std::string, NinjaFile> fileMap;
-    while (!f.eof())
+    while (std::getline(f, line))
     {
-        std::getline(f, line);
         if (line.starts_with('#'))
         {
             continue;
@@ -132,21 +229,44 @@ const std::vector<NinjaFile> &NinjaLog::files() const
     return files_;
 }
 
+static std::vector<std::string> split(const std::string &line, char separator)
+{
+    std::vector<std::string> result;
+    std::stringstream s(line);
+    std::string t;
+    while(getline(s,t,separator)) {
+        result.push_back(t);
+    }
+    return result;
+}
+template<typename T> 
+void convert(const std::string&str,T*result)
+{
+    std::stringstream s(str);
+    s >> *result;
+    if (s.fail())
+    {
+        throw std::logic_error("Invalid file format.");
+    }
+
+}
 NinjaFile::NinjaFile(const std::string &line)
 {
-    stringstream s{line};
     uint64_t iFileTime;
     std::string discard;
-    s >> start_time_ >> end_time_ >> iFileTime >> filename_ >> discard;
+    std::vector<std::string> fields = split(line,'\t');
+    if (fields.size() < 5) {
+        throw std::logic_error("Invalid file format.");
+    }
+    convert(fields[0],&start_time_);
+    convert(fields[1],&end_time_);
+    convert(fields[2],&iFileTime);
+    filename_ = fields[3];
+    extra_ = fields[4];
 
     ninja_clock_t::duration durationSinceEpoch(iFileTime);
     ninja_clock_t::time_point fileTime{durationSinceEpoch};
     this->time_ = fileTime;
-
-    if (s.fail())
-    {
-        throw std::logic_error(SS("Invalid file format. line: " << line));
-    }
 }
 
 uint64_t NinjaFile::start_time_ms() const { return start_time_; }
@@ -233,4 +353,14 @@ std::ostream&operator<<(std::ostream&os,const NinjaHistory &history)
         os << endl;
 }
     return os;
+}
+
+std::ostream&operator<<(std::ostream&s, const NinjaFile&ninjaFile)
+{
+    s << ninjaFile.start_time_ms() 
+    << '\t' << ninjaFile.end_time_ms()
+    << '\t' << ninjaFile.time().time_since_epoch().count()
+    << '\t' << ninjaFile.file_name()
+    << '\t' << ninjaFile.extra();
+    return s;
 }
